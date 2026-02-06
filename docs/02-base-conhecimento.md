@@ -2,17 +2,33 @@
 
 ## Dados Utilizados
 
-Descreva se usou os arquivos da pasta `data`, por exemplo:
-
-| Arquivo | Formato | Utilização no Agente |
-|---------|---------|---------------------|
-| `historico_atendimento.csv` | CSV | Contextualizar interações anteriores |
-| `perfil_investidor.json` | JSON | Personalizar recomendações |
-| `produtos_financeiros.json` | JSON | Sugerir produtos adequados ao perfil |
-| `transacoes.csv` | CSV | Analisar padrão de gastos do cliente |
-
-> [!TIP]
-> **Quer um dataset mais robusto?** Você pode utilizar datasets públicos do [Hugging Face](https://huggingface.co/datasets) relacionados a finanças, desde que sejam adequados ao contexto do desafio.
+<table>
+<tr>
+<th>Arquivo</th>
+<th>Formato</th>
+<th>Utilização no Agente</th>
+</tr>
+<tr>
+<td><b>produtos_financeiros.json</b></td>
+<td>JSON</td>
+<td>Montar uma carteira otima baseada nas informações disponíveis</td>
+</tr>
+<tr>
+<td><b>historico_produtos_financeiros.csv</b></td>
+<td>CSV</td>
+<td>Calcular o Risco do ativo utilizando Desvio Padrão como métrica</td>
+</tr>
+<tr>
+<td><b>taxas.csv</b></td>
+<td>CSV</td>
+<td>Calcular o Retorno do ativo</td>
+</tr>
+<tr>
+<td><b>historico_atendimento.csv</b></td>
+<td>CSV</td>
+<td>Contextualização das interações anteriores, para dar continuidade ao atendimento de forma eficiente.</td>
+</tr>
+</table>
 
 ---
 
@@ -20,7 +36,15 @@ Descreva se usou os arquivos da pasta `data`, por exemplo:
 
 > Você modificou ou expandiu os dados mockados? Descreva aqui.
 
-[Sua descrição aqui]
+Modifiquei `produtos_financeiros.json` da seguinte forma:
+- Removi o atribuito "indicado_para" pois o agente sempre vai tentar diminuir o risco da carteira do cliente.
+- O atributo "Risco" vai receber valores númericos do desvio padrão do ativo.
+
+Modifiquei os dados contidos no `historico_atendimento.csv` para se adequar ao contexto do desafio.
+
+Adicionei `historico_produtos_financeiros.csv` para armazenar o historico de preço de negociação dos ativos de renda fixa e historico de cota dos fundos.
+
+Adicionei `taxas.csv` para guardar as taxas de referência que serão utilizadas no calculo da rentabilidade do ativo.
 
 ---
 
@@ -29,12 +53,14 @@ Descreva se usou os arquivos da pasta `data`, por exemplo:
 ### Como os dados são carregados?
 > Descreva como seu agente acessa a base de conhecimento.
 
-[ex: Os JSON/CSV são carregados no início da sessão e incluídos no contexto do prompt]
+O agente utiliza o arquivo JSON para obter os resultados, mas antes de realizar a sua carga ele pega a informação nos arquivos CSV `taxas.csv` e `historico_atendimento.csv` para realizar o calculo do valores de retorno e risco dos ativos respectivamente. E no final da sessão salvar o pedido no arquivo `historico_atendimento.csv`
 
 ### Como os dados são usados no prompt?
 > Os dados vão no system prompt? São consultados dinamicamente?
 
-[Sua descrição aqui]
+Ele pega os retornos e riscos de todos os ativos disponiveis com base em quanto o cliente deseja investir. Utilizando como contexto o modelo de diversificação de Markowitz o agente calcula a fronteira eficiente e por meio dela ele escolhe o ponto onde o cliente terá maiores retornos com o menor risco possivel.
+
+![alt text](../assets/FronteiraEficiente.jpg)
 
 ---
 
@@ -43,13 +69,25 @@ Descreva se usou os arquivos da pasta `data`, por exemplo:
 > Mostre um exemplo de como os dados são formatados para o agente.
 
 ```
-Dados do Cliente:
-- Nome: João Silva
-- Perfil: Moderado
-- Saldo disponível: R$ 5.000
+Dados de entrada (produtos financeiros):
+- Nome: Ativo A
+- Rentabilidade: 10%
+- Risco: 5%
 
-Últimas transações:
-- 01/11: Supermercado - R$ 450
-- 03/11: Streaming - R$ 55
+- Nome: Ativo B
+- Rentabilidade: 8%
+- Risco: 6%
+
+- Nome: Ativo C
+- Rentabilidade: 12%
+- Risco: 8%
+
+Dados de saída:
+- Rentabilidade carteira: 11%
+- Índice de sharpe: 1.2
+- Composição da carteira:
+    - Ativo A: 75%
+    - Ativo B: 10%
+    - Ativo C: 15%
 ...
 ```
